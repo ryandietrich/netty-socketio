@@ -41,6 +41,7 @@ import com.corundumstudio.socketio.handler.AuthorizeHandler;
 import com.corundumstudio.socketio.handler.ClientHead;
 import com.corundumstudio.socketio.handler.ClientsBox;
 import com.corundumstudio.socketio.handler.EncoderHandler;
+import com.corundumstudio.socketio.handler.ResponseLogic;
 import com.corundumstudio.socketio.messages.PacketsMessage;
 import com.corundumstudio.socketio.messages.XHROptionsMessage;
 import com.corundumstudio.socketio.messages.XHRPostMessage;
@@ -97,6 +98,14 @@ public class PollingTransport extends ChannelInboundHandlerAdapter {
                         handleMessage(req, sessionId, queryDecoder, ctx);
                     } else {
                         // first connection
+                        if ( req.getMethod().equals("GET") ) { // first connection cannot be GET
+                            ResponseLogic.sendError(
+                                ctx, "BAD_HANDSHAKE_METHOD", "Bad handshake method", origin
+                            );
+                            req.release();
+                            return;
+                        }
+
                         ClientHead client = ctx.channel().attr(ClientHead.CLIENT).get();
                         handleMessage(req, client.getSessionId(), queryDecoder, ctx);
                     }

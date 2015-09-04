@@ -23,7 +23,11 @@ import java.util.UUID;
 
 import com.corundumstudio.socketio.HandshakeData;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ClientsBox {
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final Map<UUID, ClientHead> uuid2clients = PlatformDependent.newConcurrentHashMap();
     private final Map<Channel, ClientHead> channel2clients = PlatformDependent.newConcurrentHashMap();
@@ -63,4 +67,10 @@ public class ClientsBox {
         return channel2clients.get(channel);
     }
 
+    public void dumpStats() {
+        log.info("Memory Sizes: " +
+            "uuid2clients=" + uuid2clients.keySet().size() + ", " +
+            "channel2clients=" + channel2clients.keySet().size()
+        );
+    }
 }

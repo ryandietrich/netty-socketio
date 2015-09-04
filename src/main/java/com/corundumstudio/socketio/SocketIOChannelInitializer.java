@@ -88,6 +88,36 @@ public class SocketIOChannelInitializer extends ChannelInitializer<Channel> impl
     private InPacketHandler packetHandler;
     private SSLContext sslContext;
     private Configuration configuration;
+    private MemoryThread memoryThread = null;
+
+    static class MemoryThread extends Thread {
+        private final Logger log = LoggerFactory.getLogger(getClass());
+        private final ClientsBox clientsBox;
+
+        public MemoryThread(ClientsBox cb) {
+            this.clientsBox = cb;
+            log.info("Memory thread startup!");
+        }
+
+        @Override
+        public void run() {
+            while ( true ) {
+                this.clientsBox.dumpStats();
+                try {
+                    Thread.sleep(600000); // once per hour
+                } catch ( Exception ex ) {
+                    log.error("Error sleeping!", ex);
+                }
+            }
+        }
+    }
+
+    private synchronized void startMemoryThread() {
+        if ( this.memoryThread == null ) {
+            this.memoryThread = new MemoryThread(this.clientsBox);
+            this.memoryThread.start();
+        }
+    }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
@@ -96,6 +126,8 @@ public class SocketIOChannelInitializer extends ChannelInitializer<Channel> impl
 
     public void start(Configuration configuration, NamespacesHub namespacesHub) {
         this.configuration = configuration;
+
+        this.startMemoryThread();
 
         ackManager = new AckManager(scheduler);
 

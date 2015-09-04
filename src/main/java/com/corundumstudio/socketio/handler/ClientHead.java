@@ -256,6 +256,14 @@ public class ClientHead {
         return currentTransport;
     }
 
+    /**
+        getChannel: Get the channel for a given transport.
+        @param Transport
+    */
+    public Channel getChannel(Transport transport) {
+        return ( channels.get(transport) == null ? null : channels.get(transport).getChannel() );
+    }
+
     public Queue<Packet> getPacketsQueue(Transport transport) {
         return channels.get(transport).getPacketsQueue();
     }

@@ -122,6 +122,20 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
             if (queryDecoder.path().equals(connectPath)
                     && sid == null) {
                 String origin = req.headers().get(HttpHeaders.Names.ORIGIN);
+
+                // If the sid is present but not found in the clientsBox, send the correct error msg
+                if ( sid != null &&
+                    sid.size() == 1 &&
+                    clientsBox.get( UUID.fromString(sid.get(0))) == null
+                ) {
+                    ResponseLogic.sendError(
+                        ctx, "UNKNOWN_SID", "Session ID unknown",
+                        req.headers().get(HttpHeaders.Names.ORIGIN)
+                    );
+                    req.release();
+                    return;
+                }
+
                 if (!authorize(ctx, channel, origin, queryDecoder.parameters(), req)) {
                     req.release();
                     return;
@@ -231,6 +245,9 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
     @Override
     public void onDisconnect(ClientHead client) {
         clientsBox.removeClient(client.getSessionId());
-    }
 
+        // If we don't remove the connection transport here memory will never be cleaned up
+        if ( client.getCurrentTransport() == Transport.POLLING )
+            clientsBox.remove(client.getChannel(client.getCurrentTransport()));
+    }
 }
